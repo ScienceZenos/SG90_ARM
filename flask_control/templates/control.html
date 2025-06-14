@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SG90 ARM</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+      body {
+        background: #ffa600;
+        color: #222;
+        font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+        min-height: 100vh;
+      }
+      h1 {
+        color: #fff;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-shadow: 0 4px 24px #ffa600cc, 0 1px 0 #ffd600;
+        background: linear-gradient(90deg,#ffa600 0%,#ffd600 100%);
+        border-radius: 18px;
+        padding: 18px 32px 14px 32px;
+        box-shadow: 0 4px 24px #ffb30044;
+        display: inline-block;
+      }
+      .main-panel {
+        background: #fff3d1;
+        border-radius: 18px;
+        box-shadow: 0 4px 24px 0 #ffb30044;
+        padding: 22px 28px;
+        margin-bottom: 18px;
+      }
+      .slider-group label {
+        display: block;
+        margin-bottom: 12px;
+        font-weight: 700;
+        color: #222;
+        font-size: 1.13em;
+      }
+      input[type=range] {
+        width: 220px;
+        accent-color: #ffb300;
+        background: linear-gradient(90deg, #ffd600 0%, #ffa600 100%);
+        border-radius: 8px;
+        height: 8px;
+        margin-left: 12px;
+        box-shadow: 0 2px 8px #ffd60055;
+      }
+      #gripperState {
+        color: #ffa600;
+        font-size: 1.1em;
+        margin-left: 24px;
+      }
+      .status-panel {
+        background: #fffbe6;
+        color: #222;
+        border: 1.5px solid #ffa600;
+        font-weight: 700;
+        font-size: 1.13em;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 8px #ffd60033;
+      }
+      .help-panel {
+        background: linear-gradient(90deg, #ffd600 0%, #ffa600 100%);
+        color: #222;
+        border: none;
+        font-size: 1.08em;
+        font-weight: 600;
+        box-shadow: 0 2px 8px #ffa60033;
+      }
+      .slider-group, .home-group, .gamepad-map-group, .gamepad-debug-group {
+        background: #fffbe6;
+        border: 1.5px solid #ffd600;
+        border-radius: 18px;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 8px #ffd60033;
+      }
+      .slider-group input[type=range]::-webkit-slider-thumb {
+        background: #ffa600;
+        border: 2px solid #fff;
+      }
+      .slider-group input[type=range]::-moz-range-thumb {
+        background: #ffa600;
+        border: 2px solid #fff;
+      }
+      .slider-group input[type=range]::-ms-thumb {
+        background: #ffa600;
+        border: 2px solid #fff;
+      }
+      .slider-group input[type=range]:focus {
+        outline: 2px solid #ffa600;
+      }
+      .slider-group span {
+        color: #ffa600;
+        font-weight: 700;
+      }
+      h2, h3 {
+        color: #ffa600;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-shadow: 0 4px 24px #ffd60099;
+      }
+      .btn, button {
+        background: linear-gradient(90deg, #ffd600 0%, #ffa600 100%);
+        color: #222;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 22px;
+        font-weight: 800;
+        font-size: 1.1em;
+        box-shadow: 0 2px 8px #ffb30033;
+        transition: background 0.2s;
+      }
+      .btn:hover, button:hover {
+        background: linear-gradient(90deg, #ffa600 0%, #ffd600 100%);
+      }
+    </style>
+</head>
+<body>
+  <div style="margin-bottom:18px;display:flex;align-items:center;gap:32px;">
+    <h1 style="font-size:2.3em;margin:0;color:#fff;font-weight:900;letter-spacing:2px;text-shadow:0 4px 24px #ffa600cc, 0 1px 0 #ffd600; background:linear-gradient(90deg,#ffa600 0%,#ffd600 100%);border-radius:18px;padding:18px 32px 14px 32px;box-shadow:0 4px 24px #ffb30044;display:inline-block;">SG90 ARM</h1>
+    <div id="gamepadStatusLive" style="font-size:1.1em;font-weight:700;color:#ffa600;">No gamepad detected</div>
+  </div>
+  <div class="main-panel" style="margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:24px;">
+      <label for="teleopMode" style="font-weight:800;font-size:1.15em;color:#222;">Teleoperation Mode:</label>
+      <select id="teleopMode" style="font-size:1.1em;padding:6px 18px;border-radius:8px;border:1.5px solid #ffa600;background:#fffbe6;font-weight:700;color:#222;">
+        <option value="gamepad">Gamepad</option>
+        <option value="sliders">Web Sliders</option>
+        <option value="scripted" disabled>Scripted/Autonomous (coming soon)</option>
+      </select>
+    </div>
+    <div id="teleopDesc" style="margin-top:10px;color:#ffa600;font-weight:600;font-size:1.05em;">Use a gamepad for live teleoperation. If no gamepad is detected, use the web sliders below.</div>
+  </div>
+  <div class="status-panel status" id="status">Connecting...</div>
+  <div class="enable-group main-panel">
+      <label><input type="checkbox" id="en1" onchange="toggleEnable(1)"> Enable Base (J1)</label>
+      <label><input type="checkbox" id="en2" onchange="toggleEnable(2)"> Enable Shoulder (J2)</label>
+      <label><input type="checkbox" id="en3" onchange="toggleEnable(3)"> Enable Elbow (J3)</label>
+      <label><input type="checkbox" id="en4" onchange="toggleEnable(4)"> Enable Gripper (J4)</label>
+  </div>
+  <div class="slider-group main-panel" id="sliderPanel">
+      <label>Base (J1): <span id="val1">90</span>
+          <input type="range" min="0" max="180" value="90" id="slider1" oninput="updateSlider(1, this.value)">
+      </label>
+      <label>Shoulder (J2): <span id="val2">90</span>
+          <input type="range" min="0" max="180" value="90" id="slider2" oninput="updateSlider(2, this.value)">
+      </label>
+      <label>Elbow (J3): <span id="val3">90</span>
+          <input type="range" min="0" max="180" value="90" id="slider3" oninput="updateSlider(3, this.value)">
+      </label>
+      <label>Gripper (J4): <span id="val4">60</span>
+          <input type="range" min="60" max="120" value="60" id="slider4" oninput="updateSlider(4, this.value)">
+      </label>
+      <span id="gripperState" style="margin-left:18px; font-weight:bold; color:#ffa600;">Gripper: Closed</span>
+  </div>
+  <div class="help-panel main-panel" style="margin-top:18px;">
+    <!-- Gamepad mapping help removed as requested -->
+  </div>
+  <div class="home-group main-panel">
+      <label>Base (J1): <input type="number" min="0" max="180" value="90" id="home1"></label>
+      <label>Shoulder (J2): <input type="number" min="0" max="180" value="90" id="home2"></label>
+      <label>Elbow (J3): <input type="number" min="0" max="180" value="90" id="home3"></label>
+      <label>Gripper (J4): <input type="number" min="60" max="120" value="60" id="home4"></label>
+      <button class="btn" onclick="setHome()">Set Home</button>
+      <button class="btn" onclick="goHome()">Go Home</button>
+  </div>
+  <script>
+        const socket = io();
+        let currentTeleopMode = 'gamepad';
+        function updateSlider(joint, value) {
+            document.getElementById('val'+joint).textContent = value;
+            if (currentTeleopMode === 'sliders') {
+                socket.emit('move_joint', {joint: joint, angle: parseInt(value)});
+            }
+        }
+        function toggleEnable(joint) {
+            let enabled = document.getElementById('en'+joint).checked ? 1 : 0;
+            socket.emit('enable_joint', {joint: joint, enabled: enabled});
+        }
+        function setHome() {
+            for(let i=1;i<=4;i++) {
+                let pos = document.getElementById('home'+i).value;
+                socket.emit('set_home', {joint: i, pos: parseInt(pos)});
+            }
+        }
+        function goHome() {
+            socket.emit('go_home');
+        }
+        // Teleop mode switching
+        const teleopMode = document.getElementById('teleopMode');
+        const sliderPanel = document.getElementById('sliderPanel');
+        teleopMode.addEventListener('change', teleopModeChanged);
+        function teleopModeChanged() {
+            currentTeleopMode = teleopMode.value;
+            socket.emit('set_teleop_mode', {mode: currentTeleopMode});
+            if (currentTeleopMode === 'sliders') {
+                sliderPanel.style.display = '';
+                document.getElementById('teleopDesc').textContent = 'Use the web sliders below to control the robot.';
+            } else {
+                sliderPanel.style.display = 'none';
+                document.getElementById('teleopDesc').textContent = 'Use a gamepad for live teleoperation. If no gamepad is detected, use the web sliders below.';
+            }
+        }
+        // Live gamepad detection and name
+        function updateGamepadStatus() {
+          let gps = navigator.getGamepads ? navigator.getGamepads() : [];
+          let status = 'No gamepad detected';
+          let name = '';
+          for (let i = 0; i < gps.length; i++) {
+            if (gps[i]) {
+              status = 'Gamepad connected';
+              name = gps[i].id;
+              break;
+            }
+          }
+          const statusElem = document.getElementById('gamepadStatusLive');
+          if (statusElem) statusElem.textContent = status;
+          const nameElem = document.getElementById('gamepadName');
+          if (nameElem) nameElem.textContent = name ? ('Detected: ' + name) : '';
+          requestAnimationFrame(updateGamepadStatus);
+        }
+        updateGamepadStatus();
+
+        function fetchGamepadMap() {
+            fetch('/gamepad_map')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Gamepad map:', data);
+                    // Optionally update UI with mapping/codes here
+                })
+                .catch(err => console.error('Failed to fetch gamepad map:', err));
+        }
+
+        fetchGamepadMap();
+
+        socket.on('serial_status', function(data) {
+            let status = document.getElementById('status');
+            let gamepadStatus = document.getElementById('gamepadStatus');
+            if(data.connected) {
+                status.textContent = 'ESP32 Serial: Connected';
+                status.className = 'status connected';
+            } else {
+                status.textContent = 'ESP32 Serial: Disconnected';
+                status.className = 'status disconnected';
+            }
+            if (typeof data.gamepad !== 'undefined') {
+                if (!gamepadStatus) {
+                    gamepadStatus = document.createElement('div');
+                    gamepadStatus.id = 'gamepadStatus';
+                    gamepadStatus.className = 'status';
+                    status.parentNode.insertBefore(gamepadStatus, status.nextSibling);
+                }
+                if (data.gamepad) {
+                    gamepadStatus.textContent = 'Gamepad: Connected';
+                    gamepadStatus.className = 'status connected';
+                } else {
+                    gamepadStatus.textContent = 'Gamepad: Not Detected';
+                    gamepadStatus.className = 'status disconnected';
+                }
+            }
+        });
+        socket.on('connect', function() {
+            console.log('Socket.IO connected');
+            document.getElementById('status').textContent = 'Connected to server, waiting for ESP32 status...';
+        });
+        socket.on('disconnect', function() {
+            document.getElementById('status').textContent = 'Disconnected from server';
+        });
+    </script>
+</body>
+</html>
