@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>SG90 ARM</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
       body {
         background: #ffa600;
@@ -11,23 +12,105 @@
         font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
         min-height: 100vh;
       }
-      h1 {
-        color: #fff;
-        font-weight: 900;
-        letter-spacing: 1px;
-        text-shadow: 0 4px 24px #ffa600cc, 0 1px 0 #ffd600;
-        background: linear-gradient(90deg,#ffa600 0%,#ffd600 100%);
-        border-radius: 18px;
-        padding: 18px 32px 14px 32px;
-        box-shadow: 0 4px 24px #ffb30044;
-        display: inline-block;
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
       }
+      .header-title {
+        font-size: 2.7em;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #fff;
+        background: linear-gradient(90deg,#ff9100 0%,#ffd600 100%);
+        border-radius: 32px;
+        padding: 22px 48px 18px 48px;
+        box-shadow: 0 6px 32px #ffb30066, 0 1px 0 #ffd600;
+        text-shadow: 0 6px 32px #ff9100cc, 0 1px 0 #ffd600;
+        border: 3px solid #fffbe6;
+        transition: box-shadow 0.2s;
+      }
+      .header-title:hover {
+        box-shadow: 0 8px 40px #ffb30099, 0 1px 0 #ffd600;
+      }
+      .header-status {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #fffbe6;
+        background: #ff9100;
+        border-radius: 16px;
+        padding: 10px 28px;
+        box-shadow: 0 2px 12px #ffd60055;
+        border: 2px solid #fffbe6;
+      }
+      .dashboard {
+        display: flex;
+        gap: 32px;
+        margin-bottom: 24px;
+      }
+      .dashboard-panel {
+        flex: 1;
+        background: #fffbe6;
+        border-radius: 22px;
+        box-shadow: 0 2px 12px #ffd60033;
+        padding: 18px 28px 18px 28px;
+        min-width: 260px;
+      }
+      .dashboard-title {
+        font-size: 1.25em;
+        font-weight: 800;
+        color: #ffa600;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+      }
+      .device-list, .method-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .device-list li, .method-list li {
+        font-size: 1.08em;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .device-status {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+      }
+      .device-status.connected { background: #4caf50; }
+      .device-status.disconnected { background: #e53935; }
       .main-panel {
         background: #fff3d1;
         border-radius: 18px;
         box-shadow: 0 4px 24px 0 #ffb30044;
         padding: 22px 28px;
         margin-bottom: 18px;
+      }
+      .status-panel {
+        background: #fffbe6;
+        color: #222;
+        border: 1.5px solid #ffa600;
+        font-weight: 700;
+        font-size: 1.13em;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 8px #ffd60033;
+      }
+      .enable-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 700;
+        color: #222;
+        font-size: 1.13em;
+        border-radius: 12px;
+        padding: 6px 12px;
+        background: #fffbe6;
+        box-shadow: 0 1px 4px #ffd60022;
       }
       .slider-group label {
         display: block;
@@ -44,35 +127,6 @@
         height: 8px;
         margin-left: 12px;
         box-shadow: 0 2px 8px #ffd60055;
-      }
-      #gripperState {
-        color: #ffa600;
-        font-size: 1.1em;
-        margin-left: 24px;
-      }
-      .status-panel {
-        background: #fffbe6;
-        color: #222;
-        border: 1.5px solid #ffa600;
-        font-weight: 700;
-        font-size: 1.13em;
-        margin-bottom: 18px;
-        box-shadow: 0 2px 8px #ffd60033;
-      }
-      .help-panel {
-        background: linear-gradient(90deg, #ffd600 0%, #ffa600 100%);
-        color: #222;
-        border: none;
-        font-size: 1.08em;
-        font-weight: 600;
-        box-shadow: 0 2px 8px #ffa60033;
-      }
-      .slider-group, .home-group, .gamepad-map-group, .gamepad-debug-group {
-        background: #fffbe6;
-        border: 1.5px solid #ffd600;
-        border-radius: 18px;
-        margin-bottom: 18px;
-        box-shadow: 0 2px 8px #ffd60033;
       }
       .slider-group input[type=range]::-webkit-slider-thumb {
         background: #ffa600;
@@ -93,11 +147,44 @@
         color: #ffa600;
         font-weight: 700;
       }
-      h2, h3 {
+      .gamepad-guide {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        margin: 18px 0 0 0;
+        padding: 18px 0 0 0;
+        border-top: 2px dashed #ffd600;
+      }
+      .gamepad-guide .icon {
+        font-size: 2.5em;
         color: #ffa600;
-        font-weight: 900;
-        letter-spacing: 1px;
-        text-shadow: 0 4px 24px #ffd60099;
+        margin-right: 12px;
+      }
+      .gamepad-guide .desc {
+        font-size: 1.1em;
+        color: #222;
+        font-weight: 700;
+      }
+      .home-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 700;
+        color: #222;
+        font-size: 1.13em;
+        border-radius: 12px;
+        padding: 6px 12px;
+        background: #fffbe6;
+        box-shadow: 0 1px 4px #ffd60022;
+      }
+      .home-group input[type=number] {
+        border-radius: 10px;
+        border: 1.5px solid #ffa600;
+        padding: 4px 10px;
+        font-size: 1.08em;
+        margin-left: 8px;
+        background: #fffbe6;
+        color: #222;
+        width: 70px;
       }
       .btn, button {
         background: linear-gradient(90deg, #ffd600 0%, #ffa600 100%);
@@ -113,23 +200,78 @@
       .btn:hover, button:hover {
         background: linear-gradient(90deg, #ffa600 0%, #ffd600 100%);
       }
+      .record-group {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .save-recording-group {
+        display: none;
+        margin-bottom: 24px;
+      }
+      .dataset-viewer {
+        background: #fffbe6;
+        border-radius: 18px;
+        box-shadow: 0 2px 8px #ffd60033;
+        padding: 18px 24px;
+        margin-bottom: 18px;
+      }
+      .dataset-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .dataset-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #ffd60044;
+      }
+      .dataset-list li:last-child {
+        border-bottom: none;
+      }
+      .dataset-actions button {
+        margin-left: 8px;
+        font-size: 0.98em;
+        padding: 6px 14px;
+      }
     </style>
 </head>
 <body>
-  <div style="margin-bottom:18px;display:flex;align-items:center;gap:32px;">
-    <h1 style="font-size:2.3em;margin:0;color:#fff;font-weight:900;letter-spacing:2px;text-shadow:0 4px 24px #ffa600cc, 0 1px 0 #ffd600; background:linear-gradient(90deg,#ffa600 0%,#ffd600 100%);border-radius:18px;padding:18px 32px 14px 32px;box-shadow:0 4px 24px #ffb30044;display:inline-block;">SG90 ARM</h1>
-    <div id="gamepadStatusLive" style="font-size:1.1em;font-weight:700;color:#ffa600;">No gamepad detected</div>
+  <div class="header">
+    <div class="header-title">SG90 ARM</div>
+    <div style="display:flex;gap:18px;align-items:center;">
+      <div class="header-status" id="esp32StatusBox" style="background:#fffbe6;color:#ffa600;border:2px solid #ffa600;min-width:120px;text-align:center;">ESP32</div>
+      <div class="header-status" id="gamepadStatusLive" style="background:#fffbe6;color:#ffa600;border:2px solid #ffa600;min-width:180px;text-align:center;">No gamepad detected</div>
+    </div>
+  </div>
+  <div class="dashboard">
+    <div class="dashboard-panel">
+      <div class="dashboard-title"><i class="fa-solid fa-microchip"></i> Controllers</div>
+      <ul class="device-list">
+        <li><span class="device-status connected" id="esp32Status"></span>ESP32 (Serial)</li>
+      </ul>
+    </div>
+    <div class="dashboard-panel">
+      <div class="dashboard-title"><i class="fa-solid fa-gamepad"></i> Control Methods</div>
+      <ul class="method-list">
+        <li><i class="fa-solid fa-gamepad"></i> Gamepad</li>
+        <li><i class="fa-solid fa-sliders"></i> Web Sliders</li>
+      </ul>
+    </div>
   </div>
   <div class="main-panel" style="margin-bottom:24px;">
     <div style="display:flex;align-items:center;gap:24px;">
       <label for="teleopMode" style="font-weight:800;font-size:1.15em;color:#222;">Teleoperation Mode:</label>
       <select id="teleopMode" style="font-size:1.1em;padding:6px 18px;border-radius:8px;border:1.5px solid #ffa600;background:#fffbe6;font-weight:700;color:#222;">
+        <option value="">Select...</option>
         <option value="gamepad">Gamepad</option>
         <option value="sliders">Web Sliders</option>
         <option value="scripted" disabled>Scripted/Autonomous (coming soon)</option>
       </select>
     </div>
-    <div id="teleopDesc" style="margin-top:10px;color:#ffa600;font-weight:600;font-size:1.05em;">Use a gamepad for live teleoperation. If no gamepad is detected, use the web sliders below.</div>
+    <div id="teleopDesc" style="margin-top:10px;color:#ffa600;font-weight:600;font-size:1.05em;">Select a control method to begin.</div>
   </div>
   <div class="status-panel status" id="status">Connecting...</div>
   <div class="enable-group main-panel">
@@ -138,7 +280,7 @@
       <label><input type="checkbox" id="en3" onchange="toggleEnable(3)"> Enable Elbow (J3)</label>
       <label><input type="checkbox" id="en4" onchange="toggleEnable(4)"> Enable Gripper (J4)</label>
   </div>
-  <div class="slider-group main-panel" id="sliderPanel">
+  <div class="slider-group main-panel" id="sliderPanel" style="display:none;">
       <label>Base (J1): <span id="val1">90</span>
           <input type="range" min="0" max="180" value="90" id="slider1" oninput="updateSlider(1, this.value)">
       </label>
@@ -151,12 +293,45 @@
       <label>Gripper (J4): <span id="val4">60</span>
           <input type="range" min="60" max="120" value="60" id="slider4" oninput="updateSlider(4, this.value)">
       </label>
-      <span id="gripperState" style="margin-left:18px; font-weight:bold; color:#ffa600;">Gripper: Closed</span>
   </div>
-  <div class="help-panel main-panel" style="margin-top:18px;">
-    <!-- Gamepad mapping help removed as requested -->
+  <div class="main-panel gamepad-guide" id="gamepadGuide" style="display:none; flex-direction:column; align-items:flex-start; margin-bottom:24px; border-top:none;">
+    <div style="display:flex;align-items:center;gap:24px;">
+      <span style="background:#ffd600;display:inline-block;padding:8px 12px;border-radius:14px;box-shadow:0 2px 8px #ffd60055;">
+        <img src="/static/Animation%20-%201749986585160.gif" alt="Gamepad Animation" style="height:90px;display:block;">
+      </span>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="icon"><i class="fa-solid fa-arrow-left"></i></span>
+          <span class="desc">Left Stick Left: Base Left (J1 -)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="icon"><i class="fa-solid fa-arrow-right"></i></span>
+          <span class="desc">Left Stick Right: Base Right (J1 +)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="icon"><i class="fa-solid fa-arrow-up"></i></span>
+          <span class="desc">Left Stick Up: Shoulder Up (J2 +)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="icon"><i class="fa-solid fa-arrow-down"></i></span>
+          <span class="desc">Left Stick Down: Shoulder Down (J2 -)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="icon"><i class="fa-solid fa-arrow-up"></i></span>
+          <span class="desc">Right Stick Up: Elbow Up (J3 +)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="icon"><i class="fa-solid fa-arrow-down"></i></span>
+          <span class="desc">Right Stick Down: Elbow Down (J3 -)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="icon"><i class="fa-regular fa-square"></i></span>
+          <span class="desc">Square Button: Gripper Open/Close (J4)</span>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="home-group main-panel">
+  <div class="home-group main-panel" style="margin-bottom:24px;">
       <label>Base (J1): <input type="number" min="0" max="180" value="90" id="home1"></label>
       <label>Shoulder (J2): <input type="number" min="0" max="180" value="90" id="home2"></label>
       <label>Elbow (J3): <input type="number" min="0" max="180" value="90" id="home3"></label>
@@ -164,11 +339,125 @@
       <button class="btn" onclick="setHome()">Set Home</button>
       <button class="btn" onclick="goHome()">Go Home</button>
   </div>
+  <div class="record-group main-panel" style="margin-bottom:24px;">
+    <button class="btn" id="recordBtn">Start Recording</button>
+    <span id="recordStatus" style="margin-left:18px;font-weight:bold;color:#ffa600;"></span>
+  </div>
+  <div class="dataset-viewer main-panel" id="datasetViewer">
+    <div style="font-weight:800;font-size:1.15em;color:#ffa600;margin-bottom:10px;">Datasets</div>
+    <ul class="dataset-list" id="datasetList">
+      <!-- Populated by JS -->
+    </ul>
+  </div>
+  <!-- Movement Recording/Playback Panel -->
+  <div class="main-panel" style="margin-bottom:24px;">
+    <div style="font-weight:800;font-size:1.15em;color:#ffa600;margin-bottom:10px;">Movement Playback</div>
+    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+      <label style="font-weight:700;color:#222;">Select Dataset:
+        <select id="playbackDataset" style="margin-left:8px;padding:6px 18px;border-radius:8px;border:1.5px solid #ffa600;background:#fffbe6;font-weight:700;color:#222;"></select>
+      </label>
+      <label style="font-weight:700;color:#222;">Cycles:
+        <input type="number" id="playbackCycles" min="1" value="1" style="width:60px;margin-left:8px;border-radius:8px;border:1.5px solid #ffa600;padding:6px 10px;background:#fffbe6;color:#222;">
+      </label>
+      <button class="btn" onclick="startPlayback()"><i class="fa-solid fa-play"></i> Play Movement</button>
+    </div>
+    <div id="playbackStatus" style="margin-top:10px;color:#ffa600;font-weight:600;"></div>
+  </div>
   <script>
         const socket = io();
-        let currentTeleopMode = 'gamepad';
+        let currentTeleopMode = '';
+        let recording = false;
+        let recordStart = null;
+        let pendingRecording = null;
+        let gripperOpen = false;
+        const recordBtn = document.getElementById('recordBtn');
+        const recordStatus = document.getElementById('recordStatus');
+        const recordingName = document.getElementById('recordingName');
+        const sliderPanel = document.getElementById('sliderPanel');
+        const gamepadGuide = document.getElementById('gamepadGuide');
+        const teleopMode = document.getElementById('teleopMode');
+        const saveRecordingPanel = document.getElementById('saveRecordingPanel');
+        const saveRecordingBtn = document.getElementById('saveRecordingBtn');
+        teleopMode.addEventListener('change', teleopModeChanged);
+        function teleopModeChanged() {
+            currentTeleopMode = teleopMode.value;
+            socket.emit('set_teleop_mode', {mode: currentTeleopMode});
+            if (currentTeleopMode === 'sliders') {
+                sliderPanel.style.display = '';
+                gamepadGuide.style.display = 'none';
+                document.getElementById('teleopDesc').textContent = 'Use the web sliders below to control the robot.';
+            } else if (currentTeleopMode === 'gamepad') {
+                sliderPanel.style.display = 'none';
+                gamepadGuide.style.display = '';
+                document.getElementById('teleopDesc').textContent = 'Use a gamepad for live teleoperation. If no gamepad is detected, connect one.';
+            } else {
+                sliderPanel.style.display = 'none';
+                gamepadGuide.style.display = 'none';
+                document.getElementById('teleopDesc').textContent = 'Select a control method to begin.';
+            }
+        }
+        // Hide both on load
+        sliderPanel.style.display = 'none';
+        gamepadGuide.style.display = 'none';
+        // --- Recording workflow improvements ---
+        if (recordBtn) {
+          recordBtn.onclick = function() {
+            if (!recording) {
+              // Start recording
+              socket.emit('start_recording');
+              recordBtn.textContent = 'Stop Recording';
+              recordStatus.textContent = 'Recording...';
+              recording = true;
+              recordStart = Date.now();
+              saveRecordingPanel.style.display = 'none';
+            } else {
+              // Stop recording, then prompt for name
+              recordBtn.textContent = 'Start Recording';
+              recordStatus.textContent = '';
+              recording = false;
+              setTimeout(() => {
+                showSaveRecordingModal();
+              }, 300); // Give backend a moment to save
+            }
+          };
+        }
+
+        function showSaveRecordingModal() {
+          let modal = document.createElement('div');
+          modal.id = 'saveRecordingModal';
+          modal.style.position = 'fixed';
+          modal.style.top = '0';
+          modal.style.left = '0';
+          modal.style.width = '100vw';
+          modal.style.height = '100vh';
+          modal.style.background = 'rgba(0,0,0,0.45)';
+          modal.style.display = 'flex';
+          modal.style.alignItems = 'center';
+          modal.style.justifyContent = 'center';
+          modal.style.zIndex = '9999';
+          modal.innerHTML = `<div style='background:#fffbe6;padding:32px 38px 24px 38px;border-radius:18px;box-shadow:0 4px 32px #ffa60099;max-width:400px;width:90vw;position:relative;'>
+            <button onclick='document.getElementById("saveRecordingModal").remove()' style='position:absolute;top:12px;right:18px;font-size:1.3em;background:none;border:none;color:#ffa600;cursor:pointer;'><i class='fa-solid fa-xmark'></i></button>
+            <div style='font-size:1.15em;font-weight:700;color:#ffa600;margin-bottom:12px;'>Save Recording</div>
+            <input type='text' id='modalRecordingName' placeholder='Enter dataset name (default: arm_demo)' style='border-radius:8px;border:1.5px solid #ffa600;padding:8px 14px;font-size:1.08em;margin-bottom:14px;background:#fffbe6;color:#222;width:100%;'>
+            <button class='btn' style='width:100%;margin-top:8px;' onclick='saveRecordingFromModal()'>Save</button>
+          </div>`;
+          document.body.appendChild(modal);
+          document.getElementById('modalRecordingName').focus();
+        }
+
+        window.saveRecordingFromModal = function() {
+          let name = document.getElementById('modalRecordingName').value.trim();
+          name = name.replace(/[^a-zA-Z0-9_-]/g, '');
+          // Only emit stop_recording with name, not start_recording
+          socket.emit('stop_recording', {name: name});
+          document.getElementById('saveRecordingModal').remove();
+          recordStatus.textContent = 'Recording saved!';
+          setTimeout(() => { loadDatasets(); updatePlaybackDatasets(); }, 400);
+        }
         function updateSlider(joint, value) {
-            document.getElementById('val'+joint).textContent = value;
+            if (document.getElementById('val'+joint)) {
+                document.getElementById('val'+joint).textContent = value;
+            }
             if (currentTeleopMode === 'sliders') {
                 socket.emit('move_joint', {joint: joint, angle: parseInt(value)});
             }
@@ -178,28 +467,40 @@
             socket.emit('enable_joint', {joint: joint, enabled: enabled});
         }
         function setHome() {
+            // Gather all home positions
+            let homeAngles = [];
             for(let i=1;i<=4;i++) {
-                let pos = document.getElementById('home'+i).value;
-                socket.emit('set_home', {joint: i, pos: parseInt(pos)});
+                let pos = parseInt(document.getElementById('home'+i).value);
+                homeAngles.push(pos);
+                socket.emit('set_home', {joint: i, pos: pos});
+            }
+            // Save to localStorage for persistence (optional, for UI convenience)
+            localStorage.setItem('sg90_home_angles', JSON.stringify(homeAngles));
+            // Optionally update sliders to match new home
+            for(let i=1;i<=4;i++) {
+                if(document.getElementById('slider'+i)) {
+                    document.getElementById('slider'+i).value = homeAngles[i-1];
+                    if(document.getElementById('val'+i)) document.getElementById('val'+i).textContent = homeAngles[i-1];
+                }
             }
         }
         function goHome() {
             socket.emit('go_home');
-        }
-        // Teleop mode switching
-        const teleopMode = document.getElementById('teleopMode');
-        const sliderPanel = document.getElementById('sliderPanel');
-        teleopMode.addEventListener('change', teleopModeChanged);
-        function teleopModeChanged() {
-            currentTeleopMode = teleopMode.value;
-            socket.emit('set_teleop_mode', {mode: currentTeleopMode});
-            if (currentTeleopMode === 'sliders') {
-                sliderPanel.style.display = '';
-                document.getElementById('teleopDesc').textContent = 'Use the web sliders below to control the robot.';
-            } else {
-                sliderPanel.style.display = 'none';
-                document.getElementById('teleopDesc').textContent = 'Use a gamepad for live teleoperation. If no gamepad is detected, use the web sliders below.';
-            }
+            // Update sliders to home positions after a short delay (robot moves gradually)
+            setTimeout(function() {
+                const homeAngles = [
+                    parseInt(document.getElementById('home1').value),
+                    parseInt(document.getElementById('home2').value),
+                    parseInt(document.getElementById('home3').value),
+                    parseInt(document.getElementById('home4').value)
+                ];
+                for(let i=1;i<=4;i++) {
+                    if(document.getElementById('slider'+i)) {
+                        document.getElementById('slider'+i).value = homeAngles[i-1];
+                        if(document.getElementById('val'+i)) document.getElementById('val'+i).textContent = homeAngles[i-1];
+                    }
+                }
+            }, 1200); // Wait for robot to finish moving home (adjust if needed)
         }
         // Live gamepad detection and name
         function updateGamepadStatus() {
@@ -215,56 +516,166 @@
           }
           const statusElem = document.getElementById('gamepadStatusLive');
           if (statusElem) statusElem.textContent = status;
-          const nameElem = document.getElementById('gamepadName');
-          if (nameElem) nameElem.textContent = name ? ('Detected: ' + name) : '';
           requestAnimationFrame(updateGamepadStatus);
         }
         updateGamepadStatus();
-
-        function fetchGamepadMap() {
-            fetch('/gamepad_map')
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Gamepad map:', data);
-                    // Optionally update UI with mapping/codes here
-                })
-                .catch(err => console.error('Failed to fetch gamepad map:', err));
+        // Dataset viewer CRUD (placeholder, needs backend support)
+        function loadDatasets() {
+          fetch('/list_datasets')
+            .then(function(r) { return r.json(); })
+            .then(function(datasets) {
+              const list = document.getElementById('datasetList');
+              list.innerHTML = '';
+              if (!datasets.length) {
+                list.innerHTML = "<li style='color:#aaa;font-style:italic;'>No datasets found. Record a new movement to get started.</li>";
+              } else {
+                datasets.forEach(function(ds) {
+                  let displayName = ds.name && ds.name.trim() ? ds.name : `(unnamed ${ds.id})`;
+                  const li = document.createElement('li');
+                  li.innerHTML = `<span>${displayName} <span style='color:#aaa;font-size:0.95em;'>(${ds.date})</span></span>
+                    <span class='dataset-actions'>
+                      <button onclick="exportDataset('${displayName}')"><i class='fa-solid fa-download'></i> Export</button>
+                      <button onclick="viewDataset('${displayName}')"><i class='fa-solid fa-eye'></i> View</button>
+                      <button onclick="editDataset(${ds.id}, '${displayName}')"><i class='fa-solid fa-pen-to-square'></i> Edit</button>
+                      <button onclick="deleteDataset(${ds.id}, '${displayName}')"><i class='fa-solid fa-trash'></i> Delete</button>
+                    </span>`;
+                  list.appendChild(li);
+                });
+              }
+            });
         }
-
-        fetchGamepadMap();
-
+        function exportDataset(name) { alert('Export '+name+' (implement backend)'); }
+        function viewDataset(name) {
+          // Fetch and display dataset contents in a modal or panel
+          fetch(`/view_dataset?name=${encodeURIComponent(name)}`)
+            .then(r => r.json())
+            .then(data => {
+              let html = `<div style='font-size:1.1em;font-weight:700;color:#ffa600;margin-bottom:8px;'>View: ${name}</div>`;
+              if (data.angles && data.timestamps) {
+                html += `<table style='width:100%;border-collapse:collapse;font-size:0.98em;'>`;
+                html += `<tr style='background:#fff3d1;'><th>#</th><th>J1</th><th>J2</th><th>J3</th><th>J4</th><th>Time (s)</th></tr>`;
+                for (let i = 0; i < Math.min(data.angles.length, 100); i++) {
+                  html += `<tr style='background:${i%2?'#fffbe6':'#fff'};'><td>${i+1}</td><td>${data.angles[i][0]}</td><td>${data.angles[i][1]}</td><td>${data.angles[i][2]}</td><td>${data.angles[i][3]}</td><td>${data.timestamps[i].toFixed(2)}</td></tr>`;
+                }
+                html += `</table>`;
+                if (data.angles.length > 100) html += `<div style='color:#aaa;font-size:0.95em;margin-top:6px;'>(showing first 100 rows)</div>`;
+              } else {
+                html += `<div style='color:#e53935;'>No data found in this dataset.</div>`;
+              }
+              showModal(html);
+            });
+        }
+        function showModal(html) {
+          let modal = document.getElementById('modalViewer');
+          if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modalViewer';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100vw';
+            modal.style.height = '100vh';
+            modal.style.background = 'rgba(0,0,0,0.45)';
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            modal.style.zIndex = '9999';
+            modal.innerHTML = `<div id='modalContent' style='background:#fffbe6;padding:32px 38px 24px 38px;border-radius:18px;box-shadow:0 4px 32px #ffa60099;max-width:700px;width:90vw;max-height:80vh;overflow:auto;position:relative;'><button onclick='document.getElementById("modalViewer").remove()' style='position:absolute;top:12px;right:18px;font-size:1.3em;background:none;border:none;color:#ffa600;cursor:pointer;'><i class='fa-solid fa-xmark'></i></button>` + html + `</div>`;
+            document.body.appendChild(modal);
+          } else {
+            document.getElementById('modalContent').innerHTML = html;
+          }
+        }
+        // --- Fix dataset delete to use id, not name ---
+        function deleteDataset(id, name) {
+          if (!confirm('Delete ' + name + '? This cannot be undone.')) return;
+          fetch(`/delete_dataset?id=${encodeURIComponent(id)}`, {method: 'POST'})
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (data.ok) {
+                loadDatasets();
+                if (typeof updatePlaybackDatasets === 'function') updatePlaybackDatasets();
+              } else {
+                alert('Delete failed: ' + (data.error || 'Unknown error'));
+              }
+            });
+        }
+        function editDataset(id, oldName) {
+          const newName = prompt('Rename dataset:', oldName);
+          if (!newName || newName.trim() === oldName) return;
+          fetch('/edit_dataset', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id: id, name: newName.trim()})
+          })
+            .then(r => r.json())
+            .then(data => {
+              if (data.ok) {
+                loadDatasets();
+              } else {
+                alert('Rename failed: ' + (data.error || 'Unknown error'));
+              }
+            });
+        }
         socket.on('serial_status', function(data) {
-            let status = document.getElementById('status');
-            let gamepadStatus = document.getElementById('gamepadStatus');
-            if(data.connected) {
-                status.textContent = 'ESP32 Serial: Connected';
-                status.className = 'status connected';
+          // Update status panel for serial connection
+          const statusPanel = document.getElementById('status');
+          if (statusPanel) {
+            if (data.connected) {
+              statusPanel.textContent = 'ESP32 Connected';
+              statusPanel.style.color = '#ffa600'; // Use theme color
             } else {
-                status.textContent = 'ESP32 Serial: Disconnected';
-                status.className = 'status disconnected';
+              statusPanel.textContent = 'Connecting...';
+              statusPanel.style.color = '#e53935';
             }
-            if (typeof data.gamepad !== 'undefined') {
-                if (!gamepadStatus) {
-                    gamepadStatus = document.createElement('div');
-                    gamepadStatus.id = 'gamepadStatus';
-                    gamepadStatus.className = 'status';
-                    status.parentNode.insertBefore(gamepadStatus, status.nextSibling);
-                }
-                if (data.gamepad) {
-                    gamepadStatus.textContent = 'Gamepad: Connected';
-                    gamepadStatus.className = 'status connected';
-                } else {
-                    gamepadStatus.textContent = 'Gamepad: Not Detected';
-                    gamepadStatus.className = 'status disconnected';
-                }
+          }
+          // Update gamepad status in header based on backend
+          const gamepadStatusElem = document.getElementById('gamepadStatusLive');
+          if (gamepadStatusElem) {
+            if (data.gamepad) {
+              gamepadStatusElem.textContent = 'Gamepad connected (backend)';
+              gamepadStatusElem.style.color = '#ffa600'; // Use theme color
+            } else {
+              gamepadStatusElem.textContent = 'No gamepad detected (backend)';
+              gamepadStatusElem.style.color = '#e53935';
             }
+          }
         });
-        socket.on('connect', function() {
-            console.log('Socket.IO connected');
-            document.getElementById('status').textContent = 'Connected to server, waiting for ESP32 status...';
-        });
-        socket.on('disconnect', function() {
-            document.getElementById('status').textContent = 'Disconnected from server';
+        function updatePlaybackDatasets() {
+          fetch('/list_datasets')
+            .then(function(r) { return r.json(); })
+            .then(function(datasets) {
+              const sel = document.getElementById('playbackDataset');
+              if (!sel) return;
+              sel.innerHTML = '';
+              datasets.forEach(function(ds) {
+                let displayName = ds.name && ds.name.trim() ? ds.name : `(unnamed ${ds.id})`;
+                let opt = document.createElement('option');
+                opt.value = displayName;
+                opt.textContent = displayName + ' (' + ds.date + ')';
+                sel.appendChild(opt);
+              });
+            });
+        }
+        updatePlaybackDatasets();
+        function startPlayback() {
+          const ds = document.getElementById('playbackDataset').value;
+          const cycles = parseInt(document.getElementById('playbackCycles').value) || 1;
+          if (!ds) { document.getElementById('playbackStatus').textContent = 'Select a dataset.'; return; }
+          document.getElementById('playbackStatus').textContent = 'Playing movement...';
+          fetch(`/playback_movement?name=${encodeURIComponent(ds)}&cycles=${cycles}`, {method:'POST'})
+            .then(r => r.json())
+            .then(data => {
+              if (data.ok) {
+                document.getElementById('playbackStatus').textContent = 'Playback complete!';
+              } else {
+                document.getElementById('playbackStatus').textContent = 'Playback failed: ' + (data.error || 'Unknown error');
+              }
+            });
+        }
+        window.addEventListener('DOMContentLoaded', function() {
+          loadDatasets();
+          updatePlaybackDatasets();
         });
     </script>
 </body>
