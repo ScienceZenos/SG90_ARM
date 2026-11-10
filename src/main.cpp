@@ -6,10 +6,10 @@
 // Elbow:    GPIO 14
 // Gripper:  GPIO 27
 
-const int basePin = 13;
-const int shoulderPin = 12;
-const int elbowPin = 14;
-const int gripperPin = 27;
+const int basePin = 18;
+const int shoulderPin = 33;
+const int elbowPin = 37;
+const int gripperPin = 16;
 
 const int freq = 50; // 50 Hz for servos
 const int resolution = 16; // 16 bits for fine control
